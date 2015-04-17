@@ -3787,7 +3787,7 @@ ORACLE 8i 提供了第三种类型的触发器叫系统触发器。它可以在O
 - **在触发器的执行部分只能用DML语句（SELECT、INSERT、UPDATE、DELETE），不能使用DDL语句（CREATE、ALTER、DROP）**。
 - 触发器中不能包含事务控制语句(COMMIT，ROLLBACK，SAVEPOINT)。因为触发器是触发语句的一部分，触发语句被提交、回退时，触发器也被提交、回退了。
 - 在触发器主体中调用的任何过程、函数，都不能使用事务控制语句。
-- 在触发器主体中不能申明任何Long和blob变量。新值new和旧值old也不能向表中的任何long和blob列。
+- 在触发器主体中不能申明任何Long和blob变量。新值new和旧值old也不能指向表中的任何long和blob列。
 - 不同类型的触发器(如DML触发器、INSTEAD OF触发器、系统触发器)的语法格式和作用有较大区别。 
 
 ### 8.2 创建触发器
@@ -3836,7 +3836,7 @@ AFTER DELETE FOR EACH ROW
 
 #### 8.2.1触发器触发次序
 **1.**执行 BEFORE语句级触发器;
-**2.**对与受语句影响的每一行：
+**2.**对于受语句影响的每一行：
  - 执行 BEFORE行级触发器
  - 执行 DML语句
  - 执行 AFTER行级触发器 
@@ -3848,7 +3848,7 @@ AFTER DELETE FOR EACH ROW
 **DML触发器的限制**
 - CREATE TRIGGER语句文本的字符长度不能超过32KB；
 - 触发器体内的SELECT 语句只能为SELECT … INTO …结构，或者为定义游标所使用的SELECT 语句。
-- 触发器中不能使用数据库事务控制语句 COMMIT; ROLLBACK, SVAEPOINT 语句；
+- 触发器中不能使用数据库事务控制语句 COMMIT, ROLLBACK, SVAEPOINT 语句；
 - 由触发器所调用的过程或函数也不能使用数据库事务控制语句；
 - 触发器中不能使用LONG, LONG RAW 类型；
 - 触发器内可以参照LOB 类型列的列值，但不能通过 :NEW 修改LOB列中的数据； 
@@ -3861,7 +3861,7 @@ AFTER DELETE FOR EACH ROW
  - 2）。UPDATING [（column_1,column_2,…,column_x）]：当触发事件是UPDATE      时，如果修改了column_x列，则取值为TRUE，否则为FALSE。其中column_x是可选的。
  - 3）。DELETING：当触发事件是DELETE时，则取值为TRUE，否则为FALSE。
 
-**解发对象**：指定触发器是创建在哪个表、视图上。
+**触发对象**：指定触发器是创建在哪个表、视图上。
 **触发类型**：是语句级还是行级触发器。
 **触发条件**：由WHEN子句指定一个逻辑表达式，*只允许在行级触发器上指定触发条件，指定UPDATING后面的列的列表*。 
 
@@ -4110,7 +4110,7 @@ database_event_list：一个或多个数据库事件，事件间用 OR 分开；
 #### 8.2.4系统触发器事件属性 
 
 | 事件属性\事件 | Startup/Shutdown | Servererror | Logon/Logoff | DDL | DML |
-| :-------------: |:-------------:| :-----:|
+| :-----: |:-----:| :-----:|:-----: |:-----:| :-----:|
 | 事件名称 | ＊ | ＊ | ＊ | ＊ | ＊ |
 | 数据库名称 | ＊ | - | - | - | - |
 | 数据库实例号 | ＊ | - | - | - | - |
@@ -4124,9 +4124,16 @@ database_event_list：一个或多个数据库事件，事件间用 OR 分开；
 
 | 函数名称 | 数据类型 | 说明 |
 | :-------: |:-------:| :-----:|
-| col 3 is | right-aligned | $1600 |
-| col 2 is | centered | $12 |
-| zebra stripes | are neat | $1 |
+| Ora_sysevent | VARCHAR2（20） | 激活触发器的事件名称 |
+| Instance_num | NUMBER | 数据库实例名 |
+| Ora_database_name | VARCHAR2（50） | 数据库名称 |
+| Server_error(posi) | NUMBER | 错误信息栈中posi指定位置中的错误号 |
+| Is_servererror(err_number) | BOOLEAN | 检查err_number指定的错误号是否在错误信息栈中，如果在则返回TRUE，否则返回FALSE。在触发器内调用此函数可以判断是否发生指定的错误。 |
+| Login_user | VARCHAR2(30) | 登陆或注销的用户名称 |
+| Dictionary_obj_type | VARCHAR2(20) | DDL语句所操作的数据库对象类型 |
+| Dictionary_obj_name | VARCHAR2(30) | DDL语句所操作的数据库对象名称 |
+| Dictionary_obj_owner | VARCHAR2(30) | DDL语句所操作的数据库对象所有者名称 |
+| Des_encrypted_password | VARCHAR2(2) | 正在创建或修改的经过DES算法加密的用户口令 |
 **例1**：创建触发器，存放有关事件信息。 
 ```
 DESC ora_sysevent
@@ -4176,11 +4183,12 @@ END tr_logoff;
 
 #### 8.2.5使用触发器谓词
 ORACLE 提供三个参数INSERTING, UPDATING, DELETING 用于判断触发了哪些操作。
-| Tables | Are | Cool |
-| :-------: |:-------:| :-----:|
-| col 3 is | right-aligned | $1600 |
-| col 2 is | centered | $12 |
-| zebra stripes | are neat | $1 |
+
+| 谓词 | 行为 |
+| :-------: |:-------:|
+| INSERTING | 如果触发语句是 INSERT 语句，则为TRUE,否则为FALSE |
+| UPDATING | 如果触发语句是 UPDATE语句，则为TRUE,否则为FALSE |
+| DELETING | 如果触发语句是 DELETE 语句，则为TRUE,否则为FALSE |
  
 #### 8.2.6重新编译触发器
 如果在触发器内调用其它函数或过程，当这些函数或过程被删除或修改后，触发器的状态将被标识为无效。当DML语句激活一个无效触发器时，ORACLE将重新编译触发器代码，如果编译时发现错误，这将导致DML语句执行失败。
@@ -4189,7 +4197,7 @@ ORACLE 提供三个参数INSERTING, UPDATING, DELETING 用于判断触发了哪�
 ```
 ALTER TRIGGER [schema.] trigger_name COMPILE [ DEBUG]
 ```
-其中：DEBUG 选项要器编译器生成PL/SQL 程序条使其所使用的调试代码。
+其中：DEBUG选项要求编译器生成PL/SQL程序时其所使用的代码。
 
 ### 8.3 删除和使能触发器
 **删除触发器**： 
@@ -4795,6 +4803,14 @@ END;
 **管理复杂的表复制**；
 **防止非法的事务发生**；
 **自动生成派生的列值**；
-**帮助式显复杂的商业管理**。
+**帮助实现复杂的商业管理**。
 
 
+>原创作者：海南 **胡勇**
+博客链接<http://www.cnblogs.com/huyong/archive/2012/07/30/2614563.html>
+
+>MarkDown写作：Lynch
+博客链接<http://blog.csdn.net/hello_albee/>
+
+*谨以此总结自己三年的数据库开发经历。*
+*2015.04.17*
